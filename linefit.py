@@ -2,6 +2,7 @@ import sys
 import os
 import getopt
 import utils
+import sympy
 
 K_URG_XY = "urgxy"
 K_LONGOPT = [K_URG_XY + "="]
@@ -32,8 +33,7 @@ def main(argv):
 
         print(usage())
 
-    if timed_points is not None:
-        print(timed_points)
+    print(timed_points)
 
 
 def usage():
