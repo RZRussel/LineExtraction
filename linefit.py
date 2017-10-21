@@ -16,7 +16,7 @@ def main(argv):
 
     if len(args) > 0:
         print(usage())
-        sys.exit(2)
+        sys.exit(os.EX_USAGE)
 
     timed_points = None
 
