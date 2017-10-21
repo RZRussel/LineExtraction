@@ -17,7 +17,7 @@ def parse_urgxy_from_str(str):
     if len(comps) != 2:
         raise UtilsException("Undefined urgxy format: 'timestamp: list' expected")
 
-    timestamp = float(comps[0])
+    timestamp = int(comps[0])
 
     points_list = []
     points_comps = comps[1].strip(" ,\t\n").split(",")
