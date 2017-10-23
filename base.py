@@ -9,7 +9,10 @@ class Area:
         self._objects_dict = dict()
 
     def get_objects(self, objects_type) -> List:
-        return list(self._objects_dict[objects_type])
+        if objects_type in self._objects_dict:
+            return list(self._objects_dict[objects_type])
+        else:
+            return []
 
     def add_object(self, object_type, object_to_add):
         if object_type not in self._objects_dict:
