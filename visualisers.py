@@ -34,7 +34,8 @@ class MatplotlibVisualiser:
 
     def draw_polylines(self, polylines: List[Polyline], style: str, extra_style_params: Dict[str, Any]):
         for polyline in polylines:
-            self.draw_segments(polyline.get_segments(), style, extra_style_params)
+            if len(polyline.points) > 1:
+                self.draw_segments(polyline.get_segments(), style, extra_style_params)
 
     def draw_points(self, points: List[Point2D], style: str, extra_style_params: Dict[str, Any]):
         points_x = []
