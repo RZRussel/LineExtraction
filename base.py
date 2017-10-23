@@ -1,5 +1,7 @@
 from typing import List
 
+from sympy import Point2D
+
 __author__ = 'Xomak'
 
 
@@ -34,3 +36,22 @@ class SimpleArea(Area):
     @property
     def y(self) -> int:
         return self._y
+
+
+class Polyline:
+
+    def __init__(self):
+        self._points = []
+
+    def add(self, point: Point2D):
+        self._points.append(point)
+
+    @property
+    def points(self):
+        return list(self._points)
+
+    def __eq__(self, other):
+        return self._points == other.points
+
+    def __repr__(self):
+        return "Polyline[{}]".format(self.points)
