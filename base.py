@@ -65,6 +65,10 @@ class Polyline:
 
         for current_point in self.points:
             if previous_point is not None:
+
+                if previous_point == current_point:
+                    raise ValueError("The same point is repeated sequentially.")
+
                 segment = Segment(previous_point, current_point)
                 segments.append(segment)
             previous_point = current_point
