@@ -44,14 +44,20 @@ class XYFileReader:
 class XYFileAreaReader(XYFileReader):
 
     @staticmethod
-    def get_area(file_path):
+    def get_area(file_path, ignore_zero_point=True, merge_duplicates=True):
         timestamped_points_lists = XYFileReader.get_data(file_path)
         if len(timestamped_points_lists) != 1:
             raise NotImplemented("Area construction is not supported for files with not one instance of data")
 
         area = Area()
         timestamped_points = next(iter(timestamped_points_lists.values()))
+
+        previous_point = None
+        zero_point = Point2D(0, 0)
+
         for point in timestamped_points:
-            area.add_object(Point2D, point)
+            if (not merge_duplicates or point != previous_point) and (not ignore_zero_point or point != zero_point):
+                area.add_object(Point2D, point)
+            previous_point = point
 
         return area
