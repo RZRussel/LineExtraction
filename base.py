@@ -1,6 +1,6 @@
 from typing import List
 
-from sympy import Point2D
+from sympy import Point2D, Segment
 
 __author__ = 'Xomak'
 
@@ -47,7 +47,7 @@ class Polyline:
         self._points.append(point)
 
     @property
-    def points(self):
+    def points(self) -> List[Point2D]:
         return list(self._points)
 
     def __eq__(self, other):
@@ -55,3 +55,18 @@ class Polyline:
 
     def __repr__(self):
         return "Polyline[{}]".format(self.points)
+
+    def get_segments(self) -> List[Segment]:
+        if len(self.points) < 2:
+            raise ValueError("Polyline contains less than two points")
+
+        segments = []
+        previous_point = None
+
+        for current_point in self.points:
+            if previous_point is not None:
+                segment = Segment(previous_point, current_point)
+                segments.append(segment)
+            previous_point = current_point
+
+        return segments
