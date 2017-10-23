@@ -41,4 +41,4 @@ class TestXYFileAreaReader(unittest.TestCase):
             f.write("2372536:(-114.352;-201.86;0),(-113.112;-202.558;0),")
 
         area = XYFileAreaReader.get_area(file_path)
-        assert area.get_objects(Point2D) == {Point2D(-114.352, -201.86), Point2D(-113.112, -202.558)}
+        assert area.get_objects(Point2D) == [Point2D(-114.352, -201.86), Point2D(-113.112, -202.558)]

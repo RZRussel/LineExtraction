@@ -1,4 +1,4 @@
-from typing import Set
+from typing import List
 
 __author__ = 'Xomak'
 
@@ -8,13 +8,13 @@ class Area:
     def __init__(self):
         self._objects_dict = dict()
 
-    def get_objects(self, objects_type) -> Set:
-        return set(self._objects_dict[objects_type])
+    def get_objects(self, objects_type) -> List:
+        return list(self._objects_dict[objects_type])
 
     def add_object(self, object_type, object_to_add):
         if object_type not in self._objects_dict:
-            self._objects_dict[object_type] = set()
-        self._objects_dict[object_type].add(object_to_add)
+            self._objects_dict[object_type] = list()
+        self._objects_dict[object_type].append(object_to_add)
 
 
 class SimpleArea(Area):
