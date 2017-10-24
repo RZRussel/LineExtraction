@@ -2,57 +2,8 @@ import numpy
 import sympy
 import math
 import sys
+from typing import Any
 from finders import *
-
-
-class LineRegressionSegmentsFinder(SegmentsFinder):
-
-    def __init__(self, window_size, segmentation_size, segmentation_threshold):
-        if window_size % 2 != 1:
-            raise ValueError("Window size must be odd number")
-
-        if segmentation_size % 2 != 1:
-            raise ValueError("Segmentation size must be odd number")
-
-        self._window_size = window_size
-        self._segmentation_size = segmentation_size
-        self._segmentation_threshold = segmentation_threshold
-
-    def find(self, area: Area):
-        points = list(area.get_objects(sympy.Point2D))
-        segmentation_entities = self._perform_segmentation(points)
-
-    def _perform_segmentation(self, points):
-        line_entities = []
-        for i in range(0, len(points) - self._window_size):
-            fit_points = points[i:i + self._window_size]
-            line_entities.append(LinearRegressionEntity(fit_points))
-
-        segmentation_entities = []
-        current_segment = []
-        for i in range(0, len(line_entities)):
-            lind = i - (self._segmentation_size - 1)/2
-            if lind < 0:
-                lind = 0
-
-            rind = i + (self._segmentation_size - 1)/2
-            if rind >= len(line_entities):
-                rind = len(line_entities) - 1
-
-            curr_entities = line_entities[lind:rind+1]
-            weighted_mean_entity = LinearRegressionEntity.weighted_mean_entity(curr_entities)
-
-            d = 0.0
-            for entity in curr_entities:
-                d = d + LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
-
-            if d < self._segmentation_threshold:
-                current_segment.extend(curr_entities[-1].points)
-            elif len(current_segment) > 0:
-                segmentation_entities.append(LinearRegressionEntity(current_segment))
-                current_segment = []
-
-        return segmentation_entities
 
 
 class LinearRegressionEntity:
@@ -91,7 +42,7 @@ class LinearRegressionEntity:
         return self._points
 
     @staticmethod
-    def mahalanobis_distance_sqr(entity1, entity2):
+    def mahalanobis_distance_sqr(entity1: 'LinearRegressionEntity', entity2: 'LinearRegressionEntity') -> float:
         points1 = numpy.array([entity1.slope, entity1.offset])
         points2 = numpy.array([entity2.slope, entity2.offset])
         points_diff = points2 - points1
@@ -103,7 +54,7 @@ class LinearRegressionEntity:
             return (points_diff.dot(numpy.linalg.pinv(covariance))).dot(points_diff.T)
 
     @staticmethod
-    def weighted_mean_entity(entities):
+    def weighted_mean_entity(entities: List['LinearRegressionEntity']) -> 'LinearRegressionEntity':
         if len(entities) == 0:
             raise ValueError("Entities list must not be empty")
 
@@ -111,10 +62,10 @@ class LinearRegressionEntity:
         weighted_point = None
 
         for entity in entities:
-            if is_singular_covariance(entity.covariance):
-                raise ValueError("Singular covariance matrix")
-
-            inv_cov = numpy.linalg.inv(entity.covariance)
+            if not is_singular_covariance(entity.covariance):
+                inv_cov = numpy.linalg.inv(entity.covariance)
+            else:
+                inv_cov = numpy.linalg.pinv(entity.covariance)
 
             if weighted_point is None:
                 weighted_point = inv_cov.dot(numpy.array([entity.slope, entity.offset]).T)
@@ -126,14 +77,69 @@ class LinearRegressionEntity:
             else:
                 inv_weighted_cov = inv_weighted_cov + inv_cov
 
-        if is_singular_covariance(inv_weighted_cov):
-            raise ValueError("Singular weighted inverse covariance matrix")
+        if not is_singular_covariance(inv_weighted_cov):
+            weighted_cov = numpy.linalg.inv(inv_weighted_cov)
+        else:
+            weighted_cov = numpy.linalg.pinv(inv_weighted_cov)
 
-        weighted_cov = numpy.linalg.inv(inv_weighted_cov)
         weighted_point = weighted_cov.dot(weighted_point.T)
 
         return LinearRegressionEntity(slope=weighted_point[0], offset=weighted_point[1], covariance=weighted_cov)
 
 
-def is_singular_covariance(covariance: numpy.array):
+def is_singular_covariance(covariance: numpy.array) -> bool:
     return math.fabs(numpy.linalg.det(covariance)) < sys.float_info.epsilon
+
+
+class LineRegressionSegmentsFinder(SegmentsFinder):
+
+    def __init__(self, window_size: int, segmentation_size: int, segmentation_threshold: float):
+        if window_size % 2 != 1:
+            raise ValueError("Window size must be odd number")
+
+        if segmentation_size % 2 != 1:
+            raise ValueError("Segmentation size must be odd number")
+
+        self._window_size = window_size
+        self._segmentation_size = segmentation_size
+        self._segmentation_threshold = segmentation_threshold
+
+    def find(self, area: Area):
+        points = list(area.get_objects(sympy.Point2D))
+        segmentation_entities = self._perform_segmentation(points)
+
+    def _perform_segmentation(self, points: List[Point2D]) -> List[LinearRegressionEntity]:
+        line_entities = []
+        for i in range(0, len(points) - self._window_size):
+            fit_points = points[i:i + self._window_size]
+            line_entities.append(LinearRegressionEntity(fit_points))
+
+        segmentation_entities = []
+        current_segment = []
+        for i in range(0, len(line_entities)):
+            lind = i - (self._segmentation_size - 1) // 2
+            if lind < 0:
+                lind = 0
+
+            rind = i + (self._segmentation_size - 1) // 2
+            if rind >= len(line_entities):
+                rind = len(line_entities) - 1
+
+            curr_entities = line_entities[lind:rind+1]
+            weighted_mean_entity = LinearRegressionEntity.weighted_mean_entity(curr_entities)
+
+            d = 0.0
+            for entity in curr_entities:
+                d = d + LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
+
+            if d < self._segmentation_threshold:
+                for entity in curr_entities:
+                    current_segment.extend(entity.points)
+            elif len(current_segment) > 0:
+                segmentation_entities.append(LinearRegressionEntity(current_segment))
+                current_segment = []
+
+        if len(current_segment) > 0:
+            segmentation_entities.append(LinearRegressionEntity(current_segment))
+
+        return segmentation_entities
