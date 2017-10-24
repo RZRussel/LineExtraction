@@ -12,8 +12,9 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, 0.0))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
+        print(entities[0].entity.slope, entities[0].entity.offset)
         self.assertEqual(len(entities), 1)
 
     def test_vertical_segmentation(self):
@@ -22,7 +23,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, 0.0))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 1)
 
@@ -32,7 +33,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, i * 0.2))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 1)
 
@@ -48,7 +49,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(2.0 - i*0.1, 2.0 - i * 0.1))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 4)
 

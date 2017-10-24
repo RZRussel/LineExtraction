@@ -41,6 +41,14 @@ class LinearRegressionEntity:
         return self._points
 
     @staticmethod
+    def euqlid_distance_sqr(entity1: 'LinearRegressionEntity', entity2: 'LinearRegressionEntity') -> float:
+        points1 = numpy.array([entity1.slope, entity1.offset])
+        points2 = numpy.array([entity2.slope, entity2.offset])
+        points_diff = points2 - points1
+
+        return points_diff.dot(points_diff.T)
+
+    @staticmethod
     def mahalanobis_distance_sqr(entity1: 'LinearRegressionEntity', entity2: 'LinearRegressionEntity') -> float:
         points1 = numpy.array([entity1.slope, entity1.offset])
         points2 = numpy.array([entity2.slope, entity2.offset])
@@ -166,21 +174,25 @@ class LinearRegressionCoordinator:
 
 class LineRegressionSegmentsFinder(SegmentsFinder):
 
-    def __init__(self, window_size: int, segmentation_size: int, segmentation_threshold: float, segment_eps: float):
+    def __init__(self, window_size: int, merge_threshold: float, segment_eps: float, segmentation_size=3):
         if window_size % 2 != 1:
             raise ValueError("Window size must be odd number")
 
-        if segmentation_size % 2 != 1:
+        if segmentation_size > 0 and segmentation_size % 2 != 1:
             raise ValueError("Segmentation size must be odd number")
 
         self._window_size = window_size
         self._segmentation_size = segmentation_size
-        self._segmentation_threshold = segmentation_threshold
+        self._merge_threshold = merge_threshold
         self._segment_eps = segment_eps
 
     def find(self, area: Area):
         points = list(area.get_objects(sympy.Point2D))
-        segmentation_coordinators = self._perform_segmentation(points)
+
+        if self._segmentation_size > 0:
+            segmentation_coordinators = self._perform_segmentation(points)
+        else:
+            segmentation_coordinators = self._perform_segmentation_simplified(points)
 
         for coordinator in segmentation_coordinators:
             line = sympy.Line2D(p1=Point2D(0, coordinator.entity.offset), slope=coordinator.entity.slope)
@@ -213,7 +225,7 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
             for entity in curr_entities:
                 d = d + LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
 
-            if d < self._segmentation_threshold:
+            if d < self._merge_threshold:
                 for coord in curr_coordinators:
                     if merged_coordinator is None:
                         merged_coordinator = coord
@@ -222,6 +234,30 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
             elif merged_coordinator is not None:
                 segmentation_coord.append(merged_coordinator)
                 merged_coordinator = None
+
+        if merged_coordinator is not None:
+            segmentation_coord.append(merged_coordinator)
+
+        return segmentation_coord
+
+    def _perform_segmentation_simplified(self, points: List[Point2D]) -> List[LinearRegressionCoordinator]:
+        coordinators = self._build_linear_regression_coordinators(points)
+
+        if len(coordinators) == 0:
+            return []
+
+        segmentation_coord = []
+        merged_coordinator = coordinators[0]
+        for i in range(1, len(coordinators)):
+            curr_coord = coordinators[i]
+
+            d = LinearRegressionEntity.mahalanobis_distance_sqr(merged_coordinator.entity, curr_coord.entity)
+
+            if d < self._merge_threshold:
+                merged_coordinator = merged_coordinator.merge(curr_coord)
+            else:
+                segmentation_coord.append(merged_coordinator)
+                merged_coordinator = curr_coord
 
         if merged_coordinator is not None:
             segmentation_coord.append(merged_coordinator)
