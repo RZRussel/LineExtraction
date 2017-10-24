@@ -1,7 +1,8 @@
-from typing import List
+from collections import namedtuple
+from typing import List, Iterable
 
 from rdp import rdp
-from sympy import Point2D, Segment
+from sympy import Point2D, Segment, Line, Ray
 
 from base import Area, Polyline
 
@@ -131,3 +132,55 @@ class RDPSegmentsFinder(SegmentsFinder):
             polyline.add(point)
 
         return polyline
+
+
+class SegmentsInLineFinder(Finder):
+    ProjectedPoint = namedtuple('ProjectedPoint', ('point', 'projection', 'line_coordinate'))
+
+    def find(self, area: Area) -> Area:
+        # TODO: Implement this
+        raise NotImplementedError()
+
+    @staticmethod
+    def project_on_line(line: Line, points: Iterable[ProjectedPoint]) -> List[ProjectedPoint]:
+        some_line_point = line.p1
+        line_points = []
+
+        for current_point in points:
+
+            projection = line.projection(current_point)
+            if projection == some_line_point:
+                line_coordinate = 0
+            else:
+                dst_ray = Ray(some_line_point, projection)
+                is_inversed = dst_ray.angle_between(line) != 0
+                line_coordinate = some_line_point.distance(projection)
+                if is_inversed:
+                    line_coordinate = -line_coordinate
+
+            line_points.append(SegmentsInLineFinder.ProjectedPoint(current_point, projection, line_coordinate))
+
+        line_points.sort(key=lambda point: point.line_coordinate)
+        return line_points
+
+    @staticmethod
+    def find_segments(line: Line, points: Iterable[Point2D], epsilon: float) -> List[Segment]:
+
+        line_points = SegmentsInLineFinder.project_on_line(line, points)
+
+        segments = []
+        current_start_point = None
+
+        for i, current_point in enumerate(line_points):
+
+            if current_start_point is None:
+                current_start_point = current_point
+
+            if i == len(line_points) - 1 \
+                    or abs(current_point.line_coordinate - line_points[i+1].line_coordinate) > epsilon:
+                if current_point != current_start_point:
+                    segment = Segment(current_start_point.projection, current_point.projection)
+                    segments.append(segment)
+                current_start_point = None
+
+        return segments
