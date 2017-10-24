@@ -219,9 +219,6 @@ class RansacSegmentsFinder(SegmentsFinder):
         self.segments_threshold = segments_threshold
         self.residual_threshold = residual_threshold
 
-        if density_threshold is None and length_threshold is None:
-            raise ValueError("Either density or length threshold should be specified")
-
     def find(self, area: Area) -> Area:
         points = area.get_objects(Point2D)
         segments = self.find_segments_in_points(points)
