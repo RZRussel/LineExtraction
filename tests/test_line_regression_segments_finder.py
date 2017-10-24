@@ -12,7 +12,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, 0.0))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 1)
 
@@ -22,7 +22,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, 0.0))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 1)
 
@@ -32,7 +32,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(i * 0.1, i * 0.2))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 1)
 
@@ -48,7 +48,7 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
         for i in range(0, 20):
             points.append(Point2D(2.0 - i*0.1, 2.0 - i * 0.1))
 
-        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
         self.assertEqual(len(entities), 4)
 
@@ -99,6 +99,7 @@ class TestLinearRegression(unittest.TestCase):
         weighted_entity = LinearRegressionEntity.weighted_mean_entity([entity])
         self.assertAlmostEquals(first=entity.slope, second=weighted_entity.slope, delta=1e-6)
         self.assertAlmostEquals(first=entity.offset, second=weighted_entity.offset, delta=1e-6)
+
 
 class TestLinearRegressionCoordination(unittest.TestCase):
 

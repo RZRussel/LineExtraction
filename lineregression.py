@@ -166,7 +166,7 @@ class LinearRegressionCoordinator:
 
 class LineRegressionSegmentsFinder(SegmentsFinder):
 
-    def __init__(self, window_size: int, segmentation_size: int, segmentation_threshold: float):
+    def __init__(self, window_size: int, segmentation_size: int, segmentation_threshold: float, segment_eps: float):
         if window_size % 2 != 1:
             raise ValueError("Window size must be odd number")
 
@@ -176,10 +176,20 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
         self._window_size = window_size
         self._segmentation_size = segmentation_size
         self._segmentation_threshold = segmentation_threshold
+        self._segment_eps = segment_eps
 
     def find(self, area: Area):
         points = list(area.get_objects(sympy.Point2D))
         segmentation_coordinators = self._perform_segmentation(points)
+
+        for coordinator in segmentation_coordinators:
+            line = sympy.Line2D(p1=Point2D(0, coordinator.entity.offset), slope=coordinator.entity.slope)
+            segment_finder = SegmentsInLineFinder()
+            segments = segment_finder.find_segments(line, coordinator.entity.points, self._segment_eps)
+            for segment in segments:
+                area.add_object(Segment, segment)
+
+        return area
 
     def _perform_segmentation(self, points: List[Point2D]) -> List[LinearRegressionCoordinator]:
         coordinators = self._build_linear_regression_coordinators(points)
@@ -209,7 +219,6 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
                         merged_coordinator = coord
                     else:
                         merged_coordinator = merged_coordinator.merge(coord)
-
             elif merged_coordinator is not None:
                 segmentation_coord.append(merged_coordinator)
                 merged_coordinator = None
