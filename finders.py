@@ -1,7 +1,10 @@
 from collections import namedtuple
 from typing import List, Iterable
 
+import numpy as np
 from rdp import rdp
+from skimage.measure import LineModelND
+from skimage.measure import ransac
 from sympy import Point2D, Segment, Line, Ray
 
 from base import Area, Polyline
@@ -14,7 +17,6 @@ class Finder:
 
 
 class SegmentsFinder(Finder):
-
     def find(self, area: Area) -> Area:
         """
         Finds objects in Area, and adds them to the same Area object
@@ -25,7 +27,6 @@ class SegmentsFinder(Finder):
 
 
 class PolylinesFinder(Finder):
-
     def __init__(self, epsilon):
         self._epsilon = epsilon
 
@@ -61,7 +62,6 @@ class PolylinesFinder(Finder):
 
 
 class RDPSegmentsFinder(SegmentsFinder):
-
     def __init__(self, epsilon):
         self._epsilon = epsilon
 
@@ -136,6 +136,7 @@ class RDPSegmentsFinder(SegmentsFinder):
 
 class SegmentsInLineFinder(Finder):
     ProjectedPoint = namedtuple('ProjectedPoint', ('point', 'projection', 'line_coordinate'))
+    FoundSegment = namedtuple('FoundSegment', ('segment', 'points_number', 'density'))
 
     def find(self, area: Area) -> Area:
         # TODO: Implement this
@@ -165,22 +166,120 @@ class SegmentsInLineFinder(Finder):
 
     @staticmethod
     def find_segments(line: Line, points: Iterable[Point2D], epsilon: float) -> List[Segment]:
+        return [found_segment.segment for found_segment in
+                SegmentsInLineFinder.find_segments_with_density(line, points, epsilon)]
 
+    @staticmethod
+    def find_segments_with_density(line: Line, points: Iterable[Point2D], epsilon: float) -> List[FoundSegment]:
         line_points = SegmentsInLineFinder.project_on_line(line, points)
 
         segments = []
         current_start_point = None
+        current_segment_points_number = 0
 
         for i, current_point in enumerate(line_points):
 
             if current_start_point is None:
                 current_start_point = current_point
+                current_segment_points_number = 0
+
+            current_segment_points_number += 1
 
             if i == len(line_points) - 1 \
-                    or abs(current_point.line_coordinate - line_points[i+1].line_coordinate) > epsilon:
+                    or abs(current_point.line_coordinate - line_points[i + 1].line_coordinate) > epsilon:
                 if current_point != current_start_point:
                     segment = Segment(current_start_point.projection, current_point.projection)
-                    segments.append(segment)
+                    density = current_segment_points_number / segment.length
+                    segments.append(SegmentsInLineFinder.FoundSegment(segment, current_segment_points_number, density))
                 current_start_point = None
+
+        return segments
+
+
+class RansacSegmentsFinder(SegmentsFinder):
+    """
+    RANSAC segments finder. Currently it does not support segments, parallel to Y-axis.
+    """
+
+    def __init__(self, residual_threshold, segments_threshold, max_trials=1000,
+                 density_threshold=None, length_threshold=None):
+        """
+        Inits finder
+        :param residual_threshold: Residual threshold for RANSAC
+        :param segments_threshold: Maximal distance between points in one line to be considered as one segment
+        :param max_trials: Max trials for one RANSAC
+        :param density_threshold: Threshold for new segments finder (if previous segment's density is less
+        than this value, process will be stopped)
+        :param length_threshold: Threshold for new segments finder (if previous segment's length is less
+        than this value, process will be stopped)
+        """
+        self.length_threshold = length_threshold
+        self.density_threshold = density_threshold
+        self.max_trials = max_trials
+        self.segments_threshold = segments_threshold
+        self.residual_threshold = residual_threshold
+
+        if density_threshold is None and length_threshold is None:
+            raise ValueError("Either density or length threshold should be specified")
+
+    def find(self, area: Area) -> Area:
+        points = area.get_objects(Point2D)
+        segments = self.find_segments_in_points(points)
+        for segment in segments:
+            area.add_object(Segment, segment)
+        return area
+
+    def find_segments_in_points(self, points: List[Point2D]) -> List[Segment]:
+        np_points = np.ndarray((len(points), 2))
+
+        segments = []
+
+        for idx, point in enumerate(points):
+            np_points[idx, 0] = point.x
+            np_points[idx, 1] = point.y
+
+        is_density_valid = True
+        is_length_valid = True
+
+        while len(np_points) > 2 \
+                and (self.density_threshold is None or is_density_valid) \
+                and (self.length_threshold is None or is_length_valid):
+
+            model_robust, inliers_mask = ransac(np_points, LineModelND, min_samples=2,
+                                                residual_threshold=self.residual_threshold, max_trials=self.max_trials)
+
+            inliers = np_points[inliers_mask]
+
+            line_params = model_robust.params
+
+            origin = Point2D(line_params[0][0], line_params[0][1])
+            direction = Point2D(line_params[1][0], line_params[1][1])
+
+            line = Line(origin, origin + direction)
+            points = [Point2D(point[0], point[1]) for point in inliers]
+            found_segments = SegmentsInLineFinder.find_segments_with_density(line, points, 150)
+            current_segments = []
+            densities = []
+            lengths = []
+
+            for found_segment in found_segments:
+                current_segments.append(found_segment.segment)
+                densities.append(found_segment.density)
+                lengths.append(found_segment.segment.length)
+
+            if len(densities) > 0:
+                avg_density = np.mean(densities)
+                avg_length = np.mean(lengths)
+                if self.density_threshold:
+                    is_density_valid = avg_density > self.density_threshold
+                if self.length_threshold:
+                    is_length_valid = avg_length > self.length_threshold
+            else:
+                is_density_valid = False
+                is_length_valid = False
+
+            segments += current_segments
+
+            np_points = np_points[~inliers_mask]
 
         return segments
