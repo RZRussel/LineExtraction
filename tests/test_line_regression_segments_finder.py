@@ -1,11 +1,56 @@
 import unittest
 import math
 from sympy import Point2D
-from lineregression import LinearRegressionEntity
+from lineregression import LinearRegressionEntity, LineRegressionSegmentsFinder
 
 
 class TestLineRegressionSegmentsFinder(unittest.TestCase):
-    pass
+
+    def test_horizontal_segmentation(self):
+        points = []
+
+        for i in range(0, 20):
+            points.append(Point2D(i * 0.1, 0.0))
+
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        entities = finder._perform_segmentation(points)
+        self.assertEqual(len(entities), 1)
+
+    def test_vertical_segmentation(self):
+        points = []
+
+        for i in range(0, 20):
+            points.append(Point2D(i * 0.1, 0.0))
+
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        entities = finder._perform_segmentation(points)
+        self.assertEqual(len(entities), 1)
+
+    def test_one_segment_segmentation(self):
+        points = []
+
+        for i in range(0, 20):
+            points.append(Point2D(i * 0.1, i * 0.2))
+
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        entities = finder._perform_segmentation(points)
+        self.assertEqual(len(entities), 1)
+
+    def test_square_segmentation(self):
+        points = []
+
+        for i in range(0, 20):
+            points.append(Point2D(1 + i*0.1, 0.0))
+        for i in range(0, 20):
+            points.append(Point2D(1 + 2.0, i*0.1))
+        for i in range(0, 20):
+            points.append(Point2D(1 + 2 - i*0.1, 2.0))
+        for i in range(0, 20):
+            points.append(Point2D(1 + 0.0, 2 - i * 0.1))
+
+        finder = LineRegressionSegmentsFinder(7, 3, 0.5)
+        entities = finder._perform_segmentation(points)
+        self.assertEqual(len(entities), 4)
 
 
 class TestLinearRegression(unittest.TestCase):
