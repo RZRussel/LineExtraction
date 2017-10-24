@@ -2,7 +2,6 @@ import numpy
 import sympy
 import math
 import sys
-from typing import Any
 from finders import *
 
 
@@ -26,19 +25,19 @@ class LinearRegressionEntity:
             self._covariance = covariance
 
     @property
-    def slope(self):
+    def slope(self) -> float:
         return self._slope
 
     @property
-    def offset(self):
+    def offset(self) -> float:
         return self._offset
 
     @property
-    def covariance(self):
+    def covariance(self) -> numpy.array:
         return self._covariance
 
     @property
-    def points(self):
+    def points(self) -> List[Point2D]:
         return self._points
 
     @staticmethod
@@ -91,6 +90,80 @@ def is_singular_covariance(covariance: numpy.array) -> bool:
     return math.fabs(numpy.linalg.det(covariance)) < sys.float_info.epsilon
 
 
+class LinearRegressionCoordinator:
+
+    def __init__(self, entity: LinearRegressionEntity, start_index: int):
+        if entity is None:
+            raise ValueError("Can't coordinate empty entity")
+
+        if start_index < 0:
+            raise ValueError("Entity's start must not be negative")
+
+        self._entity = entity
+        self._start_index = start_index
+
+    @property
+    def entity(self) -> LinearRegressionEntity:
+        return self._entity
+
+    @property
+    def start_index(self) -> int:
+        return self._start_index
+
+    def can_merge(self, coordinator: 'LinearRegressionCoordinator') -> bool:
+        if coordinator is None:
+            return False
+
+        if self.start_index < coordinator.start_index:
+            left = self
+            right = coordinator
+        else:
+            left = coordinator
+            right = self
+
+        left_points = left.entity.points
+        right_points = right.entity.points
+
+        if left_points is None or right_points is None:
+            return False
+
+        if left.start_index + len(left_points) < right.start_index:
+            return False
+
+        return True
+
+    def merge(self, coordinator: 'LinearRegressionCoordinator') -> 'LinearRegressionCoordinator':
+        if coordinator is None:
+            raise ValueError("Can't merge with None")
+
+        if self.start_index < coordinator.start_index:
+            left = self
+            right = coordinator
+        else:
+            left = coordinator
+            right = self
+
+        left_points = left.entity.points
+        right_points = right.entity.points
+
+        if left_points is None or right_points is None:
+            raise ValueError("No points found to merge")
+
+        if left.start_index + len(left_points) < right.start_index:
+            raise ValueError("Intervals must intersect to merge")
+
+        new_points = []
+        new_points.extend(left_points)
+
+        cut_position = left.start_index + len(left_points)
+        cut_len = right.start_index + len(right_points) - cut_position
+        if cut_len > 0:
+            new_points.extend(right.entity.points[len(right_points) - cut_len:])
+
+        new_entity = LinearRegressionEntity(points=new_points)
+        return LinearRegressionCoordinator(new_entity, left.start_index)
+
+
 class LineRegressionSegmentsFinder(SegmentsFinder):
 
     def __init__(self, window_size: int, segmentation_size: int, segmentation_threshold: float):
@@ -106,26 +179,24 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
 
     def find(self, area: Area):
         points = list(area.get_objects(sympy.Point2D))
-        segmentation_entities = self._perform_segmentation(points)
+        segmentation_coordinators = self._perform_segmentation(points)
 
-    def _perform_segmentation(self, points: List[Point2D]) -> List[LinearRegressionEntity]:
-        line_entities = []
-        for i in range(0, len(points) - self._window_size):
-            fit_points = points[i:i + self._window_size]
-            line_entities.append(LinearRegressionEntity(fit_points))
+    def _perform_segmentation(self, points: List[Point2D]) -> List[LinearRegressionCoordinator]:
+        coordinators = self._build_linear_regression_coordinators(points)
 
-        segmentation_entities = []
-        current_segment = []
-        for i in range(0, len(line_entities)):
+        segmentation_coord = []
+        merged_coordinator = None
+        for i in range(0, len(coordinators)):
             lind = i - (self._segmentation_size - 1) // 2
             if lind < 0:
                 lind = 0
 
             rind = i + (self._segmentation_size - 1) // 2
-            if rind >= len(line_entities):
-                rind = len(line_entities) - 1
+            if rind >= len(coordinators):
+                rind = len(coordinators) - 1
 
-            curr_entities = line_entities[lind:rind+1]
+            curr_coordinators = coordinators[lind:rind+1]
+            curr_entities = list(map(lambda c: c.entity, curr_coordinators))
             weighted_mean_entity = LinearRegressionEntity.weighted_mean_entity(curr_entities)
 
             d = 0.0
@@ -133,13 +204,25 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
                 d = d + LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
 
             if d < self._segmentation_threshold:
-                for entity in curr_entities:
-                    current_segment.extend(entity.points)
-            elif len(current_segment) > 0:
-                segmentation_entities.append(LinearRegressionEntity(current_segment))
-                current_segment = []
+                for coord in curr_coordinators:
+                    if merged_coordinator is None:
+                        merged_coordinator = coord
+                    else:
+                        merged_coordinator = merged_coordinator.merge(coord)
 
-        if len(current_segment) > 0:
-            segmentation_entities.append(LinearRegressionEntity(current_segment))
+            elif merged_coordinator is not None:
+                segmentation_coord.append(merged_coordinator)
+                merged_coordinator = None
 
-        return segmentation_entities
+        if merged_coordinator is not None:
+            segmentation_coord.append(merged_coordinator)
+
+        return segmentation_coord
+
+    def _build_linear_regression_coordinators(self, points: List[Point2D]) -> List[LinearRegressionCoordinator]:
+        coordinators = []
+        for i in range(0, len(points) - self._window_size):
+            fit_points = points[i:i + self._window_size]
+            entity = LinearRegressionEntity(fit_points)
+            coordinators.append(LinearRegressionCoordinator(entity=entity, start_index=i))
+        return coordinators
