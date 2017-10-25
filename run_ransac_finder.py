@@ -1,9 +1,9 @@
 from sympy import Point2D
 
-from base import Area
-from finders import RansacSegmentsFinder
-from readers import XYFileAreaReader
-from visualisers import MatplotlibVisualiser
+from core.base import Area
+from core.finders.ransac import RansacSegmentsFinder
+from core.readers import XYFileAreaReader
+from core.visualisers import MatplotlibVisualiser
 
 # Test entry point for development purposes
 
