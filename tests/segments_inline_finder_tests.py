@@ -2,7 +2,7 @@ import unittest
 
 from sympy import Line, Point2D, sqrt, Segment
 
-from finders import SegmentsInLineFinder
+from core.finders.segments import SegmentsInLineFinder
 
 __author__ = 'Xomak'
 

@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from sympy import Point2D
 
-from base import Area
+from core.base import Area
 
 __author__ = 'Xomak'
 

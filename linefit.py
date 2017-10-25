@@ -1,8 +1,8 @@
-import sys
-import os
 import getopt
-import utils
-import sympy
+import os
+import sys
+
+from core import utils
 
 K_URG_XY = "urgxy"
 K_LONGOPT = [K_URG_XY + "="]

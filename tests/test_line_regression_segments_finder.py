@@ -1,7 +1,9 @@
-import unittest
 import math
+import unittest
+
 from sympy import Point2D
-from lineregression import LinearRegressionEntity, LinearRegressionCoordinator, LineRegressionSegmentsFinder
+
+from core.finders.lineregression import LinearRegressionEntity, LinearRegressionCoordinator, LineRegressionSegmentsFinder
 
 
 class TestLineRegressionSegmentsFinder(unittest.TestCase):

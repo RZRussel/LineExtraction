@@ -1,12 +1,11 @@
+import shutil
 import tempfile
 import unittest
-import shutil
-
 from os import path
 
 from sympy import Point2D
 
-from readers import XYFileReader, XYFileAreaReader
+from core.readers import XYFileReader, XYFileAreaReader
 
 
 class TestXYFileReader(unittest.TestCase):

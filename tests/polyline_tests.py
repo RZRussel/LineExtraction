@@ -2,7 +2,7 @@ import unittest
 
 from sympy import Point2D, Segment
 
-from base import Polyline
+from core.base import Polyline
 
 __author__ = 'Xomak'
 

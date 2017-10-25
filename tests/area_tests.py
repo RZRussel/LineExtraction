@@ -2,7 +2,7 @@ import unittest
 
 from sympy import Point2D, Segment
 
-from base import Area
+from core.base import Area
 
 __author__ = 'Xomak'
 
