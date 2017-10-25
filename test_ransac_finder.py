@@ -1,7 +1,7 @@
 from sympy import Point2D
 
 from base import Area
-from hough_transform_finder import HoughTransformSegmentsFinder
+from finders import RansacSegmentsFinder
 from readers import XYFileAreaReader
 from visualisers import MatplotlibVisualiser
 
@@ -10,8 +10,8 @@ from visualisers import MatplotlibVisualiser
 
 area = XYFileAreaReader.get_area("example/7.xy")
 
-hough_transform_finder = HoughTransformSegmentsFinder(threshold=1, line_length=10, line_gap=150)
-area = hough_transform_finder.find(area)
+ransac_finder = RansacSegmentsFinder(20, 150)
+area = ransac_finder.find(area)
 
 t = MatplotlibVisualiser()
 t.draw(area)
