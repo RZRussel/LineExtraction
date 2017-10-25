@@ -54,9 +54,9 @@ Install required dependencies:
 To run visualization of the algorithm's work execute corresponding `run_*_finder.py` (e.g. `run_ransac_finder.py`).
 Visualization utilizes matplotlib library and in case of problems with its installation please refer to the
 official [source](https://matplotlib.org/faq/installing_faq.html).
-Datasets extracted from the LIDAR are provided in `example/` directory and can be used for experiments.
+Datasets from the LIDAR are provided in `example/` directory and can be used for experiments.
 
-To run benchmarking for algorithms in the project directory execute:
+To run benchmarking for algorithms switch to the project directory and execute:
 
 ```pytest benchmark.py```
 
