@@ -1,5 +1,5 @@
-import numpy as np
 from skimage import transform
+from converters import PointsToImageRoundBasedConverter, ImagePointToCloudPointConverter
 
 from finders import *
 from base import Area
@@ -22,10 +22,15 @@ class HoughTransformSegmentsFinder(SegmentsFinder):
         return area
 
     def find_segments_from_points(self, points):
-        hough_lines = []
+        points_converter = PointsToImageRoundBasedConverter(min_precision=0.0)
+        image, image_converter = points_converter.convert(points)
+
+        hough_lines = self._find_segments_in_image(image)
         segments = []
         for start, end in hough_lines:
-            segment = Segment(Point2D(start[0], start[1]), Point2D(end[0], end[1]))
+            start_point = image_converter.convert(Point2D(start[0], start[1]))
+            end_point = image_converter.convert(Point2D(end[0], end[1]))
+            segment = Segment(start_point, end_point)
             segments.append(segment)
 
         return segments
