@@ -1,6 +1,6 @@
 from typing import Set
 
-from base import Area, SimpleArea
+from core.base import Area, SimpleArea
 
 __author__ = 'Xomak'
 

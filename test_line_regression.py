@@ -1,9 +1,6 @@
-from sympy import Point2D
-
-from base import Area
-from lineregression import LineRegressionSegmentsFinder
-from readers import XYFileAreaReader
-from visualisers import MatplotlibVisualiser
+from core.finders.lineregression import LineRegressionSegmentsFinder
+from core.readers import XYFileAreaReader
+from core.visualisers import MatplotlibVisualiser
 
 # Test entry point for development purposes
 

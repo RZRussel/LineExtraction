@@ -3,7 +3,7 @@ import math
 
 from sympy import Point2D, Segment, pi
 
-from finders import RansacSegmentsFinder
+from core.finders.ransac import RansacSegmentsFinder
 
 __author__ = 'Xomak'
 

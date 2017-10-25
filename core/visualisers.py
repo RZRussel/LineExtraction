@@ -3,7 +3,7 @@ from typing import List, Dict, Any, Tuple
 import matplotlib.pyplot as plt
 from sympy import Segment, Point2D
 
-from base import Polyline, Area
+from core.base import Polyline, Area
 
 __author__ = 'Xomak'
 

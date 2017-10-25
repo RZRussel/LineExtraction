@@ -1,19 +1,24 @@
-import numpy
-import sympy
 import math
 import sys
-from finders import *
+from typing import List
+
+import numpy as np
+from sympy import Point2D, Line2D, Segment
+
+from core.base import Area
+from core.finders.base import SegmentsFinder
+from core.finders.segments import SegmentsInLineFinder
 
 
 class LinearRegressionEntity:
 
     def __init__(self, points=None, slope=None, offset=None, covariance=None):
         if points is not None:
-            x_values = numpy.array(list(map(lambda p: p.x, points)), dtype=float)
-            y_values = numpy.array(list(map(lambda p: p.y, points)), dtype=float)
+            x_values = np.array(list(map(lambda p: p.x, points)), dtype=float)
+            y_values = np.array(list(map(lambda p: p.y, points)), dtype=float)
 
-            line_params = numpy.polyfit(x_values, y_values, 1)
-            cov = numpy.cov(x_values, y_values)
+            line_params = np.polyfit(x_values, y_values, 1)
+            cov = np.cov(x_values, y_values)
 
             self._slope = line_params[0]
             self._offset = line_params[1]
@@ -33,7 +38,7 @@ class LinearRegressionEntity:
         return self._offset
 
     @property
-    def covariance(self) -> numpy.array:
+    def covariance(self) -> np.array:
         return self._covariance
 
     @property
@@ -42,23 +47,23 @@ class LinearRegressionEntity:
 
     @staticmethod
     def euqlid_distance_sqr(entity1: 'LinearRegressionEntity', entity2: 'LinearRegressionEntity') -> float:
-        points1 = numpy.array([entity1.slope, entity1.offset])
-        points2 = numpy.array([entity2.slope, entity2.offset])
+        points1 = np.array([entity1.slope, entity1.offset])
+        points2 = np.array([entity2.slope, entity2.offset])
         points_diff = points2 - points1
 
         return points_diff.dot(points_diff.T)
 
     @staticmethod
     def mahalanobis_distance_sqr(entity1: 'LinearRegressionEntity', entity2: 'LinearRegressionEntity') -> float:
-        points1 = numpy.array([entity1.slope, entity1.offset])
-        points2 = numpy.array([entity2.slope, entity2.offset])
+        points1 = np.array([entity1.slope, entity1.offset])
+        points2 = np.array([entity2.slope, entity2.offset])
         points_diff = points2 - points1
         covariance = entity1.covariance + entity2.covariance
 
         if not is_singular_covariance(covariance):
-            return (points_diff.dot(numpy.linalg.inv(covariance))).dot(points_diff.T)
+            return (points_diff.dot(np.linalg.inv(covariance))).dot(points_diff.T)
         else:
-            return (points_diff.dot(numpy.linalg.pinv(covariance))).dot(points_diff.T)
+            return (points_diff.dot(np.linalg.pinv(covariance))).dot(points_diff.T)
 
     @staticmethod
     def weighted_mean_entity(entities: List['LinearRegressionEntity']) -> 'LinearRegressionEntity':
@@ -70,14 +75,14 @@ class LinearRegressionEntity:
 
         for entity in entities:
             if not is_singular_covariance(entity.covariance):
-                inv_cov = numpy.linalg.inv(entity.covariance)
+                inv_cov = np.linalg.inv(entity.covariance)
             else:
-                inv_cov = numpy.linalg.pinv(entity.covariance)
+                inv_cov = np.linalg.pinv(entity.covariance)
 
             if weighted_point is None:
-                weighted_point = inv_cov.dot(numpy.array([entity.slope, entity.offset]).T)
+                weighted_point = inv_cov.dot(np.array([entity.slope, entity.offset]).T)
             else:
-                weighted_point = weighted_point + inv_cov.dot(numpy.array([entity.slope, entity.offset]).T)
+                weighted_point = weighted_point + inv_cov.dot(np.array([entity.slope, entity.offset]).T)
 
             if inv_weighted_cov is None:
                 inv_weighted_cov = inv_cov
@@ -85,17 +90,17 @@ class LinearRegressionEntity:
                 inv_weighted_cov = inv_weighted_cov + inv_cov
 
         if not is_singular_covariance(inv_weighted_cov):
-            weighted_cov = numpy.linalg.inv(inv_weighted_cov)
+            weighted_cov = np.linalg.inv(inv_weighted_cov)
         else:
-            weighted_cov = numpy.linalg.pinv(inv_weighted_cov)
+            weighted_cov = np.linalg.pinv(inv_weighted_cov)
 
         weighted_point = weighted_cov.dot(weighted_point.T)
 
         return LinearRegressionEntity(slope=weighted_point[0], offset=weighted_point[1], covariance=weighted_cov)
 
 
-def is_singular_covariance(covariance: numpy.array) -> bool:
-    return math.fabs(numpy.linalg.det(covariance)) < sys.float_info.epsilon
+def is_singular_covariance(covariance: np.array) -> bool:
+    return math.fabs(np.linalg.det(covariance)) < sys.float_info.epsilon
 
 
 class LinearRegressionCoordinator:
@@ -187,7 +192,7 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
         self._segment_eps = segment_eps
 
     def find(self, area: Area):
-        points = list(area.get_objects(sympy.Point2D))
+        points = list(area.get_objects(Point2D))
 
         if self._segmentation_size > 0:
             segmentation_coordinators = self._perform_segmentation(points)
@@ -195,7 +200,7 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
             segmentation_coordinators = self._perform_segmentation_simplified(points)
 
         for coordinator in segmentation_coordinators:
-            line = sympy.Line2D(p1=Point2D(0, coordinator.entity.offset), slope=coordinator.entity.slope)
+            line = Line2D(p1=Point2D(0, coordinator.entity.offset), slope=coordinator.entity.slope)
             segment_finder = SegmentsInLineFinder()
             segments = segment_finder.find_segments(line, coordinator.entity.points, self._segment_eps)
             for segment in segments:
@@ -223,7 +228,7 @@ class LineRegressionSegmentsFinder(SegmentsFinder):
 
             d = 0.0
             for entity in curr_entities:
-                d = d + LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
+                d += LinearRegressionEntity.mahalanobis_distance_sqr(entity, weighted_mean_entity)
 
             if d < self._merge_threshold:
                 for coord in curr_coordinators:

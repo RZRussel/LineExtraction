@@ -1,8 +1,12 @@
-from skimage import transform
-from converters import PointsToImageRoundBasedConverter
+from typing import List
 
-from finders import *
-from base import Area
+import numpy as np
+from skimage import transform
+from sympy import Point2D, Segment
+
+from core.base import Area
+from core.converters import PointsToImageRoundBasedConverter
+from core.finders.base import SegmentsFinder
 
 
 class HoughTransformSegmentsFinder(SegmentsFinder):

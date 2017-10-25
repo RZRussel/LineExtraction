@@ -2,8 +2,8 @@ import unittest
 
 from sympy import Point2D, Segment
 
-from base import Polyline, Area
-from finders import RDPSegmentsFinder
+from core.base import Polyline, Area
+from core.finders.rdp import RDPSegmentsFinder
 
 __author__ = 'Xomak'
 

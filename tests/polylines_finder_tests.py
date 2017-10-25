@@ -2,8 +2,8 @@ import unittest
 
 from sympy import Point2D
 
-from base import Area, Polyline
-from finders import PolylinesFinder
+from core.base import Area, Polyline
+from core.finders.polylines import PolylinesFinder
 
 __author__ = 'Xomak'
 
