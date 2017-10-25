@@ -1,5 +1,5 @@
 from skimage import transform
-from converters import PointsToImageRoundBasedConverter, ImagePointToCloudPointConverter
+from converters import PointsToImageRoundBasedConverter
 
 from finders import *
 from base import Area
@@ -21,7 +21,7 @@ class HoughTransformSegmentsFinder(SegmentsFinder):
 
         return area
 
-    def find_segments_from_points(self, points):
+    def find_segments_from_points(self, points: List[Point2D]) -> List[Segment]:
         points_converter = PointsToImageRoundBasedConverter(min_precision=0.0)
         image, image_converter = points_converter.convert(points)
 
