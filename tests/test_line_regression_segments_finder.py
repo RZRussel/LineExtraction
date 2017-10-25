@@ -14,7 +14,6 @@ class TestLineRegressionSegmentsFinder(unittest.TestCase):
 
         finder = LineRegressionSegmentsFinder(7, 0.5, 0.5)
         entities = finder._perform_segmentation(points)
-        print(entities[0].entity.slope, entities[0].entity.offset)
         self.assertEqual(len(entities), 1)
 
     def test_vertical_segmentation(self):
