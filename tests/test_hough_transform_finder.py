@@ -1,6 +1,8 @@
 import unittest
+
 import numpy as np
-from hough_transform_finder import HoughTransformSegmentsFinder
+
+from core.finders.hough import HoughTransformSegmentsFinder
 
 
 class TestHoughTransformFinder(unittest.TestCase):

@@ -1,9 +1,10 @@
 from sympy import Point2D
 
-from base import Area
-from finders import RDPSegmentsFinder, PolylinesFinder
-from readers import XYFileAreaReader
-from visualisers import MatplotlibVisualiser
+from core.base import Area
+from core.finders.polylines import PolylinesFinder
+from core.finders.rdp import RDPSegmentsFinder
+from core.readers import XYFileAreaReader
+from core.visualisers import MatplotlibVisualiser
 
 # Test entry point for development purposes
 

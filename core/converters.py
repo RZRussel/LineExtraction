@@ -1,10 +1,10 @@
 from collections import namedtuple
 from typing import Iterable
 
-from sympy import Point2D
 import numpy as np
+from sympy import Point2D
 
-from utils import MinFinder, MaxFinder
+from core.utils import MinFinder, MaxFinder
 
 __author__ = 'Xomak'
 

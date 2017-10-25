@@ -1,9 +1,9 @@
 import unittest
 
-from sympy import Point2D
 import numpy as np
+from sympy import Point2D
 
-from converters import PointsToImageRoundBasedConverter
+from core.converters import PointsToImageRoundBasedConverter
 
 __author__ = 'Xomak'
 
