@@ -83,8 +83,14 @@ class PointsToImageRoundBasedConverter:
 
         for point in points:
             point_translated = point - new_origin
+
             row = round(point_translated.y)
+            if row >= height:
+                row = height - 1
+
             column = round(point_translated.x)
+            if column >= width:
+                column = width - 1
 
             result_array[row, column] = 1
 
