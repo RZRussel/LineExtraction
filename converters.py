@@ -69,7 +69,7 @@ class PointsToImageRoundBasedConverter:
                                                             max_y.current,
                                                             min_precision.current)
 
-    def convert(self, points: Iterable[Point2D]) -> np.ndarray:
+    def convert(self, points: Iterable[Point2D]) -> (np.ndarray, PointToPointConverter):
         params = self.find_cloud_params(points)
 
         if params.min_precision < self.min_precision:
