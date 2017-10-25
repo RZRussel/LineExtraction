@@ -18,13 +18,13 @@ For split-and-merge part Ramer-Douglas-Peucker algorithm was used. Implementatio
 
 ## Line regression
 
-Line regression implementation based on [paper](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/82607/eth-8401-01.pdf) still in development.
+Line regression implementation based on [paper](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/82607/eth-8401-01.pdf) is still in development.
 For now simplified version is implemented. It differs from the original one in how windows are merged. In simplified version just
-consecutive windows are merged to form one segment if a threshold (see 'merged_threshold' parameter) is not exceeded.
-Mahalanobis distance compare lines in line model space is used to make merge decision.
-To run simplified algorithm pass 'segmentation_size=0' to constructor of the 'LineRegressionSegmentsFinder' class.
-To customize number of points for each window 'window_size' parameter can be setup.
-Remained parameter - 'segmentation_eps' is used in order to make decision whether segments which lies close should be merged.
+consecutive windows are merged to form one segment if a threshold (see `merged_threshold` parameter) is not exceeded.
+Mahalanobis distance is used to compare lines in line model space to make merge decision.
+To run simplified algorithm pass `segmentation_size=0` to constructor of the `LineRegressionSegmentsFinder` class.
+To customize number of points for each window `window_size` parameter can be setup.
+Remained parameter - `segmentation_eps` is used in order to make decision whether segments which lies close should be merged.
 
 ## RANSAC
 
@@ -49,16 +49,16 @@ Please, be sure that you have installed Python 3.5 (or later).
 
 Install required dependencies:
 
-'pip install -r requirements.pip'
+```pip install -r requirements.pip```
 
-To run visualization of the algorithm's work execute corresponding run_*_finder.py (e.g. run_ransac_finder.py).
+To run visualization of the algorithm's work execute corresponding `run_*_finder.py` (e.g. `run_ransac_finder.py`).
 Visualization utilizes matplotlib library and in case of problems with its installation please refer to the
 official [source](https://matplotlib.org/faq/installing_faq.html).
-Datasets extracted from the LIDAR are provided in 'example/' directory and can be used for experiments.
+Datasets extracted from the LIDAR are provided in `example/` directory and can be used for experiments.
 
 To run benchmarking for algorithms in the project directory execute:
 
-'pytest benchmark.py'
+```pytest benchmark.py```
 
 ## Authors
 
